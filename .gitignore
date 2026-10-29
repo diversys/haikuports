@@ -1,4 +1,4 @@
+# Ignore packages directories from HaikuPorter, but keep our repo packages
 packages
-repository
-*/*/download
-*/*/work-*
+!r1beta6/*/packages/
+!r1beta6/*/packages/**
