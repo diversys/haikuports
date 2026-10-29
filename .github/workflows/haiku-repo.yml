@@ -2,7 +2,7 @@ name: Build and Deploy Haiku Repo
 
 on:
   push:
-    branches: [main]
+    branches: [master]
     paths:
       - 'r1beta6/x86_64/*.hpkg'
   workflow_dispatch:
@@ -26,13 +26,43 @@ jobs:
           version: r1beta6
           architecture: x86-64
 
-      - name: Generate repo inside Haiku
+      - name: Fix vendor and generate repo
         shell: cpa.sh {0}
         run: |
           cd /boot/home/home/runner/work/haikuports/haikuports/r1beta6/x86_64
+
+          EXPECTED_VENDOR="Diver"
+
+          # 1. Check and repackage packages with a mismatched vendor
+          for pkg in *.hpkg; do
+            # Skip if not a regular file (safety check)
+            [ -f "$pkg" ] || continue
+
+            # Extract .PackageInfo to a temporary file to read the current vendor
+            package extract -i /tmp/pkg_info.txt "$pkg" 2>/dev/null
+
+            # Read the current vendor (supports quoted and unquoted values)
+            CURRENT_VENDOR=$(grep -E '^\s*vendor\s' /tmp/pkg_info.txt | sed -E 's/^\s*vendor\s+"?([^"]+)"?/\1/')
+
+            if [ "$CURRENT_VENDOR" != "$EXPECTED_VENDOR" ]; then
+              echo "Repackaging $pkg: vendor '$CURRENT_VENDOR' -> '$EXPECTED_VENDOR'"
+              # Extract the whole package into a temp directory
+              TMPDIR=$(mktemp -d)
+              package extract -C "$TMPDIR" "$pkg"
+              # Replace the vendor line in .PackageInfo
+              sed -i "s/^\s*vendor\s.*/vendor \"$EXPECTED_VENDOR\"/" "$TMPDIR/.PackageInfo"
+              # Rebuild the package with the same filename
+              package create -C "$TMPDIR" "$pkg"
+              rm -rf "$TMPDIR"
+            fi
+          done
+
+          # 2. Generate the repo index file
           rm -f repo
           package_repo create repo-info *.hpkg
-          ls *.hpkg > packages.txt
+
+          # 3. Regenerate packages.txt (package names only, no version/arch)
+          ls *.hpkg | sed -E 's/-[0-9]+\.[0-9]+\.[0-9]+-.*//' > packages.txt
 
       - name: Generate Directory Listings
         uses: jayanta525/github-pages-directory-listing@v4.0.0
