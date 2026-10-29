@@ -48,8 +48,9 @@ jobs:
             fi
           done
 
-          # Remove directories extracted by package extract (it ignores -C in this Haiku version)
-          rm -rf add-ons apps boot data documentation
+          # Remove directories extracted by package extract anywhere in the tree,
+          # except inside packages/
+          find . -type d \( -name 'add-ons' -o -name 'apps' -o -name 'boot' -o -name 'data' -o -name 'documentation' \) -not -path './packages/*' -exec rm -rf {} +
 
           PKG_FILES=$(find packages -name '*.hpkg' -type f)
           if [ -z "$PKG_FILES" ]; then
@@ -83,8 +84,7 @@ jobs:
             fi
           done
 
-          # Remove directories extracted by package extract (it ignores -C in this Haiku version)
-          rm -rf add-ons apps boot data documentation
+          find . -type d \( -name 'add-ons' -o -name 'apps' -o -name 'boot' -o -name 'data' -o -name 'documentation' \) -not -path './packages/*' -exec rm -rf {} +
 
           PKG_FILES=$(find packages -name '*.hpkg' -type f)
           if [ -z "$PKG_FILES" ]; then
@@ -108,7 +108,7 @@ jobs:
 
       - name: Remove generator footer from listings
         run: |
-          find . -name 'index.html' -exec sed -i '/generated with/d' {} +
+          find . -name 'index.html' -exec sed -i '/generated with/d; /github-pages-directory-listing/d' {} +
 
       - name: Upload Pages Artifact
         uses: actions/upload-pages-artifact@v3
