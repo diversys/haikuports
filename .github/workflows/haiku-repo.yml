@@ -19,17 +19,20 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Generate repo inside Haiku
+      - name: Start Haiku VM
         uses: cross-platform-actions/action@v1.5.0
         with:
           operating_system: haiku
           version: r1beta6
           architecture: x86-64
-          run: |
-            cd /workspace/r1beta6/x86_64
-            rm -f repo
-            package_repo create repo repo-info *.hpkg
-            ls *.hpkg > packages.txt
+
+      - name: Generate repo inside Haiku
+        shell: cpa.sh {0}
+        run: |
+          cd /boot/home/home/runner/work/haikuports/haikuports/r1beta6/x86_64
+          rm -f repo
+          package_repo create repo repo-info *.hpkg
+          ls *.hpkg > packages.txt
 
       - name: Generate Directory Listings
         uses: jayanta525/github-pages-directory-listing@v4.0.0
