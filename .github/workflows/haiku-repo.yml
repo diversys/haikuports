@@ -1,86 +1,39 @@
-name: Build and Deploy Haiku Repo
-
-on:
-  push:
-    branches: [master]
-    paths:
-      - 'r1beta6/x86_64/*.hpkg'
-  workflow_dispatch:
-
-permissions:
-  contents: read
-  pages: write
-  id-token: write
-
-jobs:
-  build-repo:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Start Haiku VM
-        uses: cross-platform-actions/action@v1.5.0
-        with:
-          operating_system: haiku
-          version: r1beta6
-          architecture: x86-64
-
       - name: Fix vendor and generate repo
         shell: cpa.sh {0}
         run: |
           cd /boot/home/home/runner/work/haikuports/haikuports/r1beta6/x86_64
-
           EXPECTED_VENDOR="Diver"
 
-          # 1. Check and repackage packages with a mismatched vendor
           for pkg in *.hpkg; do
-            # Skip if not a regular file (safety check)
             [ -f "$pkg" ] || continue
+            echo "=== Processing: $pkg ==="
 
-            # Extract .PackageInfo to a temporary file to read the current vendor
-            package extract -i /tmp/pkg_info.txt "$pkg" 2>/dev/null
+            package extract -i /tmp/pkg_info.txt "$pkg"
+            echo "--- Extracted PackageInfo: ---"
+            cat /tmp/pkg_info.txt
+            echo "--- End PackageInfo ---"
 
-            # Read the current vendor (supports quoted and unquoted values)
             CURRENT_VENDOR=$(grep -E '^\s*vendor\s' /tmp/pkg_info.txt | sed -E 's/^\s*vendor\s+"?([^"]+)"?/\1/')
+            echo "Detected vendor: '$CURRENT_VENDOR'"
 
             if [ "$CURRENT_VENDOR" != "$EXPECTED_VENDOR" ]; then
-              echo "Repackaging $pkg: vendor '$CURRENT_VENDOR' -> '$EXPECTED_VENDOR'"
-              # Extract the whole package into a temp directory
+              echo "Vendor mismatch, repackaging..."
               TMPDIR=$(mktemp -d)
               package extract -C "$TMPDIR" "$pkg"
-              # Replace the vendor line in .PackageInfo
+              echo "--- TMPDIR contents: ---"
+              ls -la "$TMPDIR"
+              echo "--- Before sed: ---"
+              grep vendor "$TMPDIR/.PackageInfo" || echo "vendor line not found!"
               sed -i "s/^\s*vendor\s.*/vendor \"$EXPECTED_VENDOR\"/" "$TMPDIR/.PackageInfo"
-              # Rebuild the package with the same filename
+              echo "--- After sed: ---"
+              grep vendor "$TMPDIR/.PackageInfo" || echo "vendor line still not found!"
               package create -C "$TMPDIR" "$pkg"
               rm -rf "$TMPDIR"
+            else
+              echo "Vendor matches, skipping repackage."
             fi
           done
 
-          # 2. Generate the repo index file
           rm -f repo
           package_repo create repo-info *.hpkg
-
-          # 3. Regenerate packages.txt (package names only, no version/arch)
           ls *.hpkg | sed -E 's/-[0-9]+\.[0-9]+\.[0-9]+-.*//' > packages.txt
-
-      - name: Generate Directory Listings
-        uses: jayanta525/github-pages-directory-listing@v4.0.0
-        with:
-          FOLDER: .
-
-      - name: Upload Pages Artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: .
-
-  deploy:
-    needs: build-repo
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
