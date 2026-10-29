@@ -31,7 +31,7 @@ jobs:
         run: |
           cd /boot/home/home/runner/work/haikuports/haikuports/r1beta6/x86_64
           rm -f repo
-          package_repo create repo-info repo *.hpkg
+          package_repo create repo-info *.hpkg
           ls *.hpkg > packages.txt
 
       - name: Generate Directory Listings
