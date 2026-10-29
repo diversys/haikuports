@@ -1,0 +1,6 @@
+name DiverHaikuPackages
+summary "Personal packages for Haiku R1/beta6 arm64 "
+vendor "Diver"
+priority 0
+identifier tag:github.com,2026:diversys/haikuports/DiverHaikuPackages/r1beta6/arm64
+architecture arm64

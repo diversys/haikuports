@@ -4,7 +4,7 @@ on:
   push:
     branches: [master]
     paths:
-      - 'r1beta6/x86_64/*.hpkg'
+      - 'r1beta6/**'
   workflow_dispatch:
 
 permissions:
@@ -13,7 +13,7 @@ permissions:
   id-token: write
 
 jobs:
-  build-repo:
+  build-and-deploy:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -26,50 +26,71 @@ jobs:
           version: r1beta6
           architecture: x86-64
 
-      - name: Fix vendor and generate repo
+      # ---------- x86_64: fix vendor + generate repo ----------
+      - name: Generate x86_64 repo (fix vendor)
         shell: cpa.sh {0}
         run: |
           cd /boot/home/home/runner/work/haikuports/haikuports/r1beta6/x86_64
           EXPECTED_VENDOR="Diver"
 
-          for pkg in *.hpkg; do
+          for pkg in packages/*.hpkg; do
             [ -f "$pkg" ] || continue
-            echo "=== Processing: $pkg ==="
-
             package extract -i /tmp/pkg_info.txt "$pkg"
-            echo "--- Extracted PackageInfo: ---"
-            cat /tmp/pkg_info.txt
-            echo "--- End PackageInfo ---"
-
             CURRENT_VENDOR=$(grep -E '^\s*vendor\s' /tmp/pkg_info.txt | sed -E 's/^\s*vendor\s+"?([^"]+)"?/\1/')
-            echo "Detected vendor: '$CURRENT_VENDOR'"
-
             if [ "$CURRENT_VENDOR" != "$EXPECTED_VENDOR" ]; then
-              echo "Vendor mismatch, repackaging..."
-              TMPDIR=$(mktemp -d)
+              PKG_PATH="$(pwd)/$pkg"
+              TMPDIR="/tmp/repack-$$"
+              mkdir -p "$TMPDIR"
               package extract -C "$TMPDIR" "$pkg"
-              echo "--- TMPDIR contents: ---"
-              ls -la "$TMPDIR"
-              echo "--- Before sed: ---"
-              grep vendor "$TMPDIR/.PackageInfo" || echo "vendor line not found!"
               sed -i "s/^\s*vendor\s.*/vendor \"$EXPECTED_VENDOR\"/" "$TMPDIR/.PackageInfo"
-              echo "--- After sed: ---"
-              grep vendor "$TMPDIR/.PackageInfo" || echo "vendor line still not found!"
-              package create -C "$TMPDIR" "$pkg"
+              package create -C "$TMPDIR" "$PKG_PATH"
               rm -rf "$TMPDIR"
-            else
-              echo "Vendor matches, skipping repackage."
             fi
           done
 
           rm -f repo
-          package_repo create repo-info *.hpkg
-          ls *.hpkg | sed -E 's/-[0-9]+\.[0-9]+\.[0-9]+-.*//' > packages.txt
+          package_repo create repo.info packages/*.hpkg
+          ls packages/*.hpkg | sed -E 's|packages/||; s/-[0-9]+\.[0-9]+\.[0-9]+-.*//' > packages.txt
+
+      # ---------- ARM64: generate repo ----------
+      - name: Generate ARM64 repo
+        shell: cpa.sh {0}
+        run: |
+          cd /boot/home/home/runner/work/haikuports/haikuports/r1beta6/arm64
+          EXPECTED_VENDOR="Diver"
+
+          for pkg in packages/*.hpkg; do
+            [ -f "$pkg" ] || continue
+            package extract -i /tmp/pkg_info.txt "$pkg"
+            CURRENT_VENDOR=$(grep -E '^\s*vendor\s' /tmp/pkg_info.txt | sed -E 's/^\s*vendor\s+"?([^"]+)"?/\1/')
+            if [ "$CURRENT_VENDOR" != "$EXPECTED_VENDOR" ]; then
+              PKG_PATH="$(pwd)/$pkg"
+              TMPDIR="/tmp/repack-$$"
+              mkdir -p "$TMPDIR"
+              package extract -C "$TMPDIR" "$pkg"
+              sed -i "s/^\s*vendor\s.*/vendor \"$EXPECTED_VENDOR\"/" "$TMPDIR/.PackageInfo"
+              package create -C "$TMPDIR" "$PKG_PATH"
+              rm -rf "$TMPDIR"
+            fi
+          done
+
+          rm -f repo
+          package_repo create repo.info packages/*.hpkg
+          ls packages/*.hpkg | sed -E 's|packages/||; s/-[0-9]+\.[0-9]+\.[0-9]+-.*//' > packages.txt
+
+      - name: Generate repo.sha256 for both architectures
+        run: |
+          cd r1beta6/x86_64 && sha256sum repo > repo.sha256 && cd ../..
+          cd r1beta6/arm64 && sha256sum repo > repo.sha256 && cd ../..
 
       - name: Generate Directory Listings
         uses: jayanta525/github-pages-directory-listing@v4.0.0
         with:
           FOLDER: .
+
+      - name: Remove generator footer from listings
+        run: |
+          find . -name 'index.html' -exec sed -i '/generated with github-pages-directory-listing/d' {} +
 
       - name: Upload Pages Artifact
         uses: actions/upload-pages-artifact@v3
@@ -77,7 +98,7 @@ jobs:
           path: .
 
   deploy:
-    needs: build-repo
+    needs: build-and-deploy
     runs-on: ubuntu-latest
     environment:
       name: github-pages
