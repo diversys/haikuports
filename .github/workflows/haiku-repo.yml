@@ -1,0 +1,53 @@
+name: Build and Deploy Haiku Repo
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'r1beta6/x86_64/*.hpkg'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  build-repo:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Generate repo inside Haiku
+        uses: cross-platform-actions/action@v0.28.0
+        with:
+          operating_system: haiku
+          version: r1beta6
+          architecture: x86-64
+          run: |
+            cd /workspace/r1beta6/x86_64
+            rm -f repo
+            package_repo create repo repo-info *.hpkg
+            ls *.hpkg > packages.txt
+
+      - name: Generate Directory Listings
+        uses: jayanta525/github-pages-directory-listing@v4.0.0
+        with:
+          FOLDER: .
+
+      - name: Upload Pages Artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+
+  deploy:
+    needs: build-repo
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Diver's Haiku packages</title>
+<meta name="description" content="Additional packages for Haiku R1/beta6 x86_64 from Diver.">
+<style>
+  :root {
+    --bg: #0b0f1a; --panel: #141a2b; --panel-2: #1b2338; --line: #263050;
+    --text: #e8ecf6; --muted: #9aa6c2; --accent: #4fd1c5; --accent-2: #7c6cff;
+    --warn: #f6c177; --radius: 16px;
+    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "DejaVu Sans Mono", monospace;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { margin: 0; font-family: var(--sans); color: var(--text); background: var(--bg); line-height: 1.6; -webkit-font-smoothing: antialiased; }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .wrap { max-width: 980px; margin: 0 auto; padding: 0 20px; }
+  header.hero { position: relative; overflow: hidden; padding: 72px 0 56px;
+    background: radial-gradient(900px 400px at 15% -10%, rgba(124,108,255,.35), transparent 60%),
+                radial-gradient(700px 360px at 90% 0%, rgba(79,209,197,.28), transparent 55%),
+                linear-gradient(180deg, #0d1324, #0b0f1a);
+    border-bottom: 1px solid var(--line); }
+  .badge { display: inline-block; font-size: 12.5px; letter-spacing: .08em; text-transform: uppercase;
+    color: var(--accent); border: 1px solid rgba(79,209,197,.35); background: rgba(79,209,197,.08);
+    padding: 5px 12px; border-radius: 999px; margin-bottom: 18px; }
+  h1 { font-size: clamp(2rem, 5.5vw, 3.1rem); line-height: 1.1; margin: 0 0 14px; letter-spacing: -.02em;
+    background: linear-gradient(90deg, #ffffff, #b9c4ff 60%, #4fd1c5);
+    -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .lead { font-size: 1.12rem; color: var(--muted); max-width: 68ch; margin: 0 0 24px; }
+  .hero-actions { display: flex; flex-wrap: wrap; gap: 12px; }
+  .btn { display: inline-block; padding: 11px 18px; border-radius: 10px; font-weight: 600;
+    border: 1px solid var(--line); color: var(--text); background: var(--panel);
+    transition: transform .12s ease, border-color .12s ease; }
+  .btn:hover { transform: translateY(-1px); text-decoration: none; border-color: var(--accent); }
+  .btn.primary { background: linear-gradient(90deg, var(--accent-2), var(--accent)); color: #06121a; border: none; }
+  section { padding: 48px 0; border-bottom: 1px solid var(--line); }
+  h2 { font-size: 1.5rem; margin: 0 0 6px; letter-spacing: -.01em; }
+  .sub { color: var(--muted); margin: 0 0 24px; }
+  .code { position: relative; background: #0a0e18; border: 1px solid var(--line); border-radius: var(--radius);
+    padding: 18px 54px 18px 18px; overflow-x: auto; margin: 0 0 18px; }
+  .code pre { margin: 0; font-family: var(--mono); font-size: 14px; color: #d7e0f5; }
+  .copy { position: absolute; top: 10px; right: 10px; font: 600 12px var(--sans); color: var(--muted);
+    background: var(--panel-2); border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px; cursor: pointer; }
+  .copy:hover { color: var(--text); border-color: var(--accent); }
+  .copy.done { color: var(--accent); border-color: var(--accent); }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
+  .card { background: linear-gradient(180deg, var(--panel), var(--panel-2)); border: 1px solid var(--line);
+    border-radius: var(--radius); padding: 20px; }
+  .card h3 { margin: 0 0 6px; font-size: 1.05rem; }
+  .card .tag { font-family: var(--mono); font-size: 12px; color: var(--accent);
+    background: rgba(79,209,197,.08); border: 1px solid rgba(79,209,197,.25);
+    padding: 2px 8px; border-radius: 6px; display: inline-block; margin-bottom: 10px; }
+  .card p { margin: 0; color: var(--muted); font-size: .95rem; }
+  .callout { background: rgba(246,193,119,.07); border: 1px solid rgba(246,193,119,.3);
+    border-radius: var(--radius); padding: 18px 20px; color: #f4e6cf; font-size: .96rem; }
+  .callout strong { color: var(--warn); }
+  .note { color: var(--muted); font-size: .95rem; }
+  footer { padding: 36px 0 56px; color: var(--muted); font-size: .93rem; }
+  footer a { color: var(--text); }
+  .muted-link { color: var(--muted); }
+  code.inline { font-family: var(--mono); background: var(--panel-2); padding: 1px 6px; border-radius: 6px; font-size: .9em; }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <span class="badge">Haiku R1/beta6 · x86_64</span>
+    <h1>Extra packages for HaikuPorts</h1>
+    <p class="lead">
+      A personal package repository maintained by <strong>Diver</strong>. It adds packages
+      that are not in the official channels. Keep the official Haiku and HaikuPorts
+      repositories enabled.
+    </p>
+    <div class="hero-actions">
+      <a class="btn primary" href="#install">Install</a>
+      <a class="btn" href="#packages">Packages</a>
+      <a class="btn" href="https://github.com/diversys/haikuports">Source &amp; maintenance</a>
+    </div>
+  </div>
+</header>
+
+<section id="about">
+  <div class="wrap">
+    <h2>About this repository</h2>
+    <p class="sub">
+      This is a personal repository by <strong>Diver</strong>. It is not endorsed by Haiku
+      or HaikuPorts. Everything here is provided AS-IS, without warranties of any kind.
+      Review package-manager proposals before installing or updating.
+    </p>
+  </div>
+</section>
+
+<section id="install">
+  <div class="wrap">
+    <h2>Install</h2>
+    <p class="sub">Open Terminal on Haiku R1/beta6 x86_64 and run these commands.</p>
+
+    <h3 style="margin:24px 0 8px">1. Add the repository</h3>
+    <div class="code"><button class="copy" data-copy>Copy</button><pre>pkgman add-repo https://diversys.github.io/haikuports/r1beta6/x86_64
+pkgman refresh DiverHaikuPackages</pre></div>
+
+    <h3 style="margin:24px 0 8px">2. Install a package</h3>
+    <div class="code"><button class="copy" data-copy>Copy</button><pre>pkgman install testapp</pre></div>
+    <p class="note">
+      Replace <code class="inline">testapp</code> with the package you need.
+      The official Haiku and HaikuPorts repositories stay enabled and provide the rest.
+    </p>
+  </div>
+</section>
+
+<section id="packages">
+  <div class="wrap">
+    <h2>Packages in this repository</h2>
+    <p class="sub">Priority 0; the official repositories stay enabled and provide the rest.</p>
+    <div class="grid">
+      <div class="card">
+        <span class="tag">testapp</span>
+        <h3>Test application</h3>
+        <p>A minimal test package to verify the repository works. Provides the
+           <code class="inline">testapp</code> command.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="updates">
+  <div class="wrap">
+    <h2>Updates</h2>
+    <p class="sub">
+      <code class="inline">pkgman add-repo</code> saves the repository across restarts, and
+      SoftwareUpdater uses it for future updates. Update from Terminal any time:
+    </p>
+    <div class="code"><button class="copy" data-copy>Copy</button><pre>pkgman refresh DiverHaikuPackages
+pkgman update</pre></div>
+    <p class="note">
+      You can also add it in <strong>Deskbar → Preferences → Repositories</strong> with the
+      <code class="inline">+</code> button. Keep <code class="inline">Haiku</code>,
+      <code class="inline">HaikuPorts</code>, and <code class="inline">DiverHaikuPackages</code>
+      enabled. To stop using it: <code class="inline">pkgman drop-repo DiverHaikuPackages</code>.
+    </p>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <p>
+      Maintained by <strong>Diver</strong>.
+      <a href="https://github.com/diversys/haikuports">Repository</a>
+    </p>
+    <p class="note">Upstream component licenses apply. Everything here is provided AS-IS.</p>
+  </div>
+</footer>
+
+<script>
+  document.querySelectorAll('[data-copy]').forEach(function (button) {
+    button.addEventListener('click', function () {
+      var text = button.parentElement.querySelector('pre').innerText;
+      var done = function () {
+        button.textContent = 'Copied';
+        button.classList.add('done');
+        setTimeout(function () { button.textContent = 'Copy'; button.classList.remove('done'); }, 1500);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done, done);
+      } else {
+        var area = document.createElement('textarea');
+        area.value = text;
+        document.body.appendChild(area);
+        area.select();
+        try { document.execCommand('copy'); } catch (e) {}
+        document.body.removeChild(area);
+        done();
+      }
+    });
+  });
+</script>
+</body>
+</html>
