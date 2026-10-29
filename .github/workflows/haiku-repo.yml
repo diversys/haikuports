@@ -48,9 +48,16 @@ jobs:
             fi
           done
 
+          # Collect explicit list of .hpkg files (shell may not expand globs in cpa.sh)
+          PKG_FILES=$(find packages -name '*.hpkg' -type f)
+          if [ -z "$PKG_FILES" ]; then
+            echo "No .hpkg files found in packages/"
+            exit 1
+          fi
+
           rm -f repo
-          package_repo create repo.info packages/*.hpkg
-          ls packages/*.hpkg | sed -E 's|packages/||; s/-[0-9]+\.[0-9]+\.[0-9]+-.*//' > packages.txt
+          package_repo create repo.info $PKG_FILES
+          find packages -name '*.hpkg' -type f | sed -E 's|packages/||; s/-[0-9]+\.[0-9]+\.[0-9]+-.*//' > packages.txt
 
       # ---------- ARM64: generate repo ----------
       - name: Generate ARM64 repo
@@ -74,9 +81,15 @@ jobs:
             fi
           done
 
+          PKG_FILES=$(find packages -name '*.hpkg' -type f)
+          if [ -z "$PKG_FILES" ]; then
+            echo "No .hpkg files found in packages/"
+            exit 1
+          fi
+
           rm -f repo
-          package_repo create repo.info packages/*.hpkg
-          ls packages/*.hpkg | sed -E 's|packages/||; s/-[0-9]+\.[0-9]+\.[0-9]+-.*//' > packages.txt
+          package_repo create repo.info $PKG_FILES
+          find packages -name '*.hpkg' -type f | sed -E 's|packages/||; s/-[0-9]+\.[0-9]+\.[0-9]+-.*//' > packages.txt
 
       - name: Generate repo.sha256 for both architectures
         run: |
